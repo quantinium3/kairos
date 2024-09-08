@@ -1,0 +1,17 @@
+---
+import { getFileFromDirectory } from '../utils/fileList.js'
+const musicFiles = getFileFromDirectory('music');
+
+---
+<div>
+    <h1 class="text-3xl font-bold text-white">Music</h1>
+    <div>
+        <ul class="max-w-full overflow-x-auto whitespace-nowrap text-white flex flex-row scroll-auto p-2">
+            {musicFiles.map((file) => (
+            <li class="inline-block mr-4">{file} </li>
+           ))}
+        </ul>
+    </div>
+</div>
+
+
