@@ -1,26 +1,18 @@
 package ffmpego
 
 import (
-	"bytes"
-	"image"
-	"os/exec"
+    "bytes"
+    "os/exec"
 )
 
-func GetCoverArt(args ...string) (image.Image, error)  {
-	cmd := exec.Command("ffmpeg", args...)
-	var out bytes.Buffer
-	cmd.Stdout = &out
-	err := cmd.Run()
-
-	if err != nil {
-		return nil, err
-	}
-
-	img, _, err := image.Decode(&out)
-	if err != nil {
-		return nil, err
-	}
-
-	return img, nil
+// GetCoverArt extracts cover art from a media file and returns it as a byte slice.
+func GetCoverArt(args ...string) ([]byte, error) {
+    cmd := exec.Command("ffmpeg", args...)
+    var out bytes.Buffer
+    cmd.Stdout = &out
+    err := cmd.Run()
+    if err != nil {
+        return nil, err
+    }
+    return out.Bytes(), nil
 }
-
