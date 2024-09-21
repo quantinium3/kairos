@@ -3,6 +3,22 @@ import { DB_NAME } from '../constants.js';
 
 const sqlite = sqlite3.verbose();
 
+function createUserTable(db) {
+  return new Promise((resolve, reject) => {
+    const sql = `
+    CREATE TABLE IF NOT EXISTS users (
+      id INTEGER PRIMARY KEY AUTOINCREMENT
+      username TEXT UNIQUE NOT NULL,
+      email TEXT UNIQUE NOT NULL,
+      password TEXT UNIQUE NOT NULL,
+      refreshToken TEXT,
+      createdAt INTEGER NOT NULL,
+      updatedAt INTEGER NOT NULL
+    )
+  `;
+  });
+}
+
 function createMediaTypesTable(db) {
   return new Promise((resolve, reject) => {
     const sql = `
