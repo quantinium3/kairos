@@ -1,2 +1,2 @@
-export const DB_NAME = "lomes"
+export const DB_NAME = "lomes.db"
 
