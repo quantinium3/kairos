@@ -1,0 +1,28 @@
+# Ignore node_modules and build directories
+node_modules/
+build/
+dist/
+
+# Ignore all minified files
+*.min.js
+
+# Ignore package lock files
+package-lock.json
+yarn.lock
+
+# Ignore environment variables
+.env
+
+# Ignore compiled files
+*.out
+*.log
+
+# Ignore coverage directory
+coverage/
+
+# Ignore generated files
+public/
+
+# Ignore specific config files
+.vscode/
+
