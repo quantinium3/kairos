@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Local Media Server that focuses on ease of use and should work with little configuration from the user side.",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "run": "nodemon -r dotenv/config --experimental-json-modules src/index.js"
   },
