@@ -1,25 +1,51 @@
-import db from "./database";
+import connectDB from './index.js';
+import { dbOperation } from '../utils/dbOperation.js';
 
-const createItem = (username, description, callback) => {
-    const sql = `INSERT INTO users (username, description) VALUES (?, ?)`
-    db.run(sql, { username, description }, function(err) {
-        callback(err, { id: this.lastID })
-    })
+export async function getAllMedia() {
+  return dbOperation('all', 'SELECT * FROM media_library');
 }
 
-const readItems = (callback) => {
-    const sql = `SELECT * FROM users`;
-    db.all(sql, {}, callback)
+export async function getMediaById() {
+  return dbOperation('all', 'SELECT * FROM media_library WHERE id = ?', [id]);
 }
 
-const updateItems = (id, username, description, callback) => {
-    const sql = `UPDATE users SET name = ?, description = ? WHERE id = ?`
-    db.run(sql, { username, description, id }, callback)
+export async function addMedia(
+  title,
+  description,
+  releaseDate,
+  mediaTypeId,
+  basePath
+) {
+  const now = Date.now();
+  const sql = `
+    INSERT INTO media_library (title, description, release_date, media_type_id, base_path, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+    `;
+  const result = await dbOperation('run', sql, [
+    title,
+    description,
+    releaseDate,
+    mediaTypeId,
+    basePath,
+    now,
+    now,
+  ]);
+  return result.lastID;
 }
 
-const deleteItem = (id, callback) => {
-    const sql = `DELETE FROM users WHERE id = ?`
-    db.run(sql, id, callback)
+export async function deleteMedia(id) {
+  const result = await dbOperation(
+    'run',
+    'DELETE FROM media_library WHERE id = ?',
+    [id]
+  );
+  return result.changes;
 }
 
-export { createItem, readItems, updateItems, deleteItem };
+export async function getEpisodesByMediaId(mediaId) {
+  return dbOperation(
+    'all',
+    'SELECT * FROM episodes WHERE media_library_id = ?',
+    [mediaId]
+  );
+}
