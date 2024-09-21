@@ -49,3 +49,24 @@ export async function getEpisodesByMediaId(mediaId) {
     [mediaId]
   );
 }
+
+export async function getUserData(username) {
+  return dbOperation('all', 'SELECT * FROM users WHERE username = ?', [
+    username,
+  ]);
+}
+
+export async function register(username, email, password) {
+  const date = Date.now();
+  const sql = `
+    INSERT INTO users (username, email, password, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?)
+  `;
+  const result = await dbOperation('run', sql, [
+    username,
+    email,
+    password,
+    date,
+    date,
+  ]);
+  return result.lastID;
+}
