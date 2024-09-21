@@ -7,15 +7,24 @@ function createUserTable(db) {
   return new Promise((resolve, reject) => {
     const sql = `
     CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT
-      username TEXT UNIQUE NOT NULL,
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      username TEXT NOT NULL,
       email TEXT UNIQUE NOT NULL,
-      password TEXT UNIQUE NOT NULL,
+      password TEXT NOT NULL,
       refreshToken TEXT,
       createdAt INTEGER NOT NULL,
       updatedAt INTEGER NOT NULL
-    )
+    );
   `;
+    db.run(sql, (err) => {
+      if (err) {
+        console.log('Error creating user table', err.message);
+        reject(err);
+      } else {
+        console.log('Created the user table successfully');
+        resolve();
+      }
+    });
   });
 }
 
@@ -52,6 +61,7 @@ function createMediaLibraryTable(db) {
         created_at INTEGER NOT NULL,
         updated_at INTEGER NOT NULL,
         FOREIGN KEY (media_type_id) REFERENCES media_types(id)
+  );
 `;
     db.run(sql, (err) => {
       if (err) {
@@ -74,6 +84,7 @@ function createSeasonsTable(db) {
         season_number INTEGER NOT NULL,
         title TEXT,
         FOREIGN KEY (media_library_id) REFERENCES media_library(id)
+  );
 `;
     db.run(sql, (err) => {
       if (err) {
@@ -100,6 +111,7 @@ function createEpisodesTable(db) {
         duration INTEGER,
         FOREIGN KEY (media_library_id) REFERENCES media_library(id),
         FOREIGN KEY (season_id) REFERENCES seasons(id)
+  );
     `;
     db.run(sql, (err) => {
       if (err) {
@@ -133,26 +145,36 @@ function initializeMediaTypes(db) {
 
 function initializeDatabase() {
   return new Promise((resolve, reject) => {
-    const db = new sqlite3.Database(DB_NAME, async (err) => {
+    const db = new sqlite3.Database(DB_NAME, (err) => {
       if (err) {
         console.error('Error connecting to database: ', err.message);
         reject(err);
       } else {
         console.log('Connected to sqlite database');
-        try {
-          await createMediaTypesTable(db);
-          await createMediaLibraryTable(db);
-          await createSeasonsTable(db);
-          await createEpisodesTable(db);
-          await initializeMediaTypes(db);
-          resolve(db);
-        } catch (err) {
-          reject(err);
-        }
+        resolve(db);
       }
     });
   });
 }
 
-export const connectDB = initializeDatabase();
-export default connectDB;
+let dbPromise;
+dbPromise = initializeDatabase()
+  .then((db) => {
+    console.log('Creating tables...');
+    return Promise.all([
+      createMediaTypesTable(db), // Create media_types table first
+      createMediaLibraryTable(db),
+      createUserTable(db), // Ensure user table is created after media_types
+      createSeasonsTable(db),
+      createEpisodesTable(db),
+      initializeMediaTypes(db),
+    ]).then(() => db); // Wait for all tables to be created
+  })
+  .catch((err) => {
+    console.error('Database initialization failed:', err);
+    throw err; // Rethrow the error to handle it in your application
+  });
+
+// Export dbPromise for use in other modules
+export { dbPromise };
+export default dbPromise;
