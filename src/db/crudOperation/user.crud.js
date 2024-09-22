@@ -1,16 +1,58 @@
-import { ACCESS_TOKEN_SECRET, REFRESH_TOKEN_SECRET, ACCESS_TOKEN_EXPIRY, REFRESH_TOKEN_EXPIRY } from '../../constants.js';
+import {
+  ACCESS_TOKEN_SECRET,
+  REFRESH_TOKEN_SECRET,
+  ACCESS_TOKEN_EXPIRY,
+  REFRESH_TOKEN_EXPIRY,
+} from '../../constants.js';
 import { dbOperation } from '../../utils/dbOperation.js';
-import bcrypt from "bcrypt"
+import bcrypt from 'bcrypt';
 import dbPromise from '../index.js';
-import jwt from "jsonwebtoken";
-import { promisify } from "util"
-import { isPasswordValid } from "../../utils/isPasswordValid.js"
+import jwt from 'jsonwebtoken';
+import { promisify } from 'util';
+import { isPasswordValid } from '../../utils/isPasswordValid.js';
+import { apiError } from '../../utils/apiError.js';
 
 const SALT_ROUNDS = 10;
 
-const jwtSign = promisify(jwt.sign);
-const jwtVerify = promisify(jwt.verify)
+const jwtVerify = promisify(jwt.verify);
 
+/*
+ * get the id, username, email from the db
+ * create a new refreshToken and accessToken and update it in the db
+ * return the tokens
+ */
+
+async function createToken(user) {
+  // Step 1: Log the user object to check if it's received
+  if (!user || !user.id || !user.username || !user.email) {
+    throw new Error('Invalid user data passed to createToken');
+  }
+
+  const payload = { id: user.id, username: user.username, email: user.email };
+
+  const accessToken = await jwt.sign(payload, ACCESS_TOKEN_SECRET, {
+    expiresIn: ACCESS_TOKEN_EXPIRY,
+  });
+
+  const refreshToken = await jwt.sign(payload, REFRESH_TOKEN_SECRET, {
+    expiresIn: REFRESH_TOKEN_EXPIRY,
+  });
+
+  const db = await dbPromise;
+
+  await new Promise((resolve, reject) => {
+    const sql = 'UPDATE users SET refreshToken = ? WHERE id = ?';
+    db.run(sql, [refreshToken, user.id], (err) => {
+      if (err) {
+        return reject(err);
+      } else {
+        resolve();
+      }
+    });
+  });
+
+  return { accessToken, refreshToken };
+}
 
 /*
  * get the date
@@ -43,24 +85,29 @@ export async function register(username, email, password) {
  */
 
 export async function login(identifier, password) {
-  const db = dbPromise;
+  console.log(`username || email:  ${identifier}, password: ${password}`);
+  const db = await dbPromise;
 
   const user = await new Promise((resolve, reject) => {
     const sql = 'SELECT * FROM users WHERE username = ? OR email = ?';
     db.get(sql, [identifier, identifier], (err, row) => {
       if (err) {
-        return reject(err)
+        return reject(err);
+      }
+      if (!row) {
+        return reject(new apiError(404, 'User not found'));
       } else {
         resolve(row);
       }
-    })
-  })
+    });
+  });
 
   if (!user || !isPasswordValid(password, user.password)) {
-    throw new apiError(401, "Invalid Password");
+    console.error('invalid password');
   }
 
   const { accessToken, refreshToken } = await createToken(user);
+  console.log(`accessToken: ${accessToken}, refreshToken: ${refreshToken}`);
   return { accessToken, refreshToken };
 }
 
@@ -79,54 +126,20 @@ export async function refreshToken(oldRefreshToken) {
       db.get(sql, [decoded.id, oldRefreshToken], (err, row) => {
         if (err) return reject(err);
         resolve(row);
-      })
-    })
+      });
+    });
 
     if (!user) {
-      throw new apiError(401, "RefreshToken is invalid");
+      throw new apiError(401, 'RefreshToken is invalid');
     }
 
     const { accessToken, refreshToken } = await createToken(user);
 
     return { accessToken, refreshToken };
   } catch (err) {
-    throw new apiError(401, "Invalid or expired refreshToken");
+    throw new apiError(401, 'Invalid or expired refreshToken');
   }
 }
-
-/*
- * get the id, username, email from the db
- * create a new refreshToken and accessToken and update it in the db
- * return the tokens
- */
-
-async function createToken(user) {
-  const payload = { id: user.id, username: user.username, email: user.email };
-
-  const accessToken = await jwtSign(payload, ACCESS_TOKEN_SECRET, {
-    expiresIn: ACCESS_TOKEN_EXPIRY
-  })
-
-  const refreshToken = await jwtSign(payload, REFRESH_TOKEN_SECRET, {
-    expiresIn: REFRESH_TOKEN_EXPIRY
-  })
-
-  const db = await dbPromise;
-  await new Promise((resolve, reject) => {
-    const sql = 'UPDATE user SET refreshToken = ? WHERE id = ?';
-
-    db.run(sql, [refreshToken, user.id], (err) => {
-      if (err) {
-        return reject(err);
-      } else {
-        resolve();
-      }
-    })
-  })
-
-  return { accessToken, refreshToken };
-}
-
 /*
  * get the refreshToken
  * update the refresh token in db to NULL
@@ -134,11 +147,26 @@ async function createToken(user) {
  * if successsfull return result;
  */
 export async function invalidateRefreshToken(refreshToken) {
-  const sql = 'UPDATE users SET refreshToken = NULL WHERE refreshToken = ?';
-  const result = await dbOperation('run', sql, [refreshToken]);
+  const db = await dbPromise; // Ensure you get the database connection
+  console.log(refreshToken);
+
+  // Use a promise to run the query
+  const result = await new Promise((resolve, reject) => {
+    const sql = 'UPDATE users SET refreshToken = NULL WHERE refreshToken = ?';
+
+    db.run(sql, [refreshToken], function (err) {
+      if (err) {
+        return reject(
+          new apiError(500, 'Database error while invalidating token')
+        );
+      }
+      resolve(this); // Use `this` to get the result context
+    });
+  });
+  console.log(result);
 
   if (result.changes === 0) {
-    throw new apiError(401, "Invalid Refresh token");
+    throw new apiError(401, 'Invalid refresh token');
   }
 
   return result;
@@ -156,25 +184,30 @@ export async function deleteUserFromDB(identifier, password) {
     const sql = 'SELECT * FROM users WHERE username = ? OR email = ?';
     db.get(sql, [identifier, identifier], (err, row) => {
       if (err) {
-        return reject(err)
+        return reject(err);
       } else {
         resolve(row);
       }
-    })
-  })
+    });
+  });
 
-  if (!user || !isPasswordValid(password, user.password)) {
-    throw new apiError(401, "Invalid Password");
-  } else {
-    sql = 'DELETE users WHERE username = ? OR email = ?';
-    try {
-      await dbOperation('run', sql, [identifier, identifier])
-      console.log("user Deleted successsfully")
-    } catch (err) {
-      throw new apiError(500, "User deletion failed");
-    }
+  if (!user || !(await bcrypt.compare(password, user.password))) {
+    console.log('Invalid password or user does not exist');
+    throw new apiError(401, 'Invalid credentials');
   }
+
+  const sql = 'DELETE FROM users WHERE username = ? OR email = ?'; 
+  return new Promise((resolve, reject) => {
+    db.run(sql, [identifier, identifier], function(err) {
+      if (err) {
+        return reject(err);
+      }
+      console.log('User deleted successfully');
+      resolve(this.changes);
+    });
+  });
 }
+
 
 /*
  * get the (username || email) and oldPassword and newPassword
@@ -195,20 +228,21 @@ export async function updatePassword(identifier, oldPassword, newPassword) {
       }
     });
   });
+  console.log(user);
 
   if (!user) {
-    throw new apiError(404, "No user with the username or email exists");
+    throw new apiError(404, 'No user with the username or email exists');
   }
 
   if (!isPasswordValid(oldPassword, user.password)) {
-    throw new apiError(401, "Invalid password");
+    throw new apiError(401, 'Invalid password');
   }
 
   try {
     const sql = 'UPDATE users SET password = ? WHERE username = ? OR email = ?';
     const hash = bcrypt.hashSync(newPassword, SALT_ROUNDS);
     await dbOperation('run', sql, [hash, identifier, identifier]);
-    console.log("Password updated successfully");
+    console.log('Password updated successfully');
   } catch (err) {
     throw new apiError(500, "Password wasn't updated");
   }
@@ -222,16 +256,17 @@ export async function getUserInfo(identifier) {
   const db = await dbPromise;
 
   const user = await new Promise((resolve, reject) => {
-    const sql = 'SELECT id, username, email, createdAt, UpdatedAt FROM users WHERE username = ? OR email = ?';
+    const sql =
+      'SELECT id, username, email, createdAt, UpdatedAt FROM users WHERE username = ? OR email = ?';
     db.get(sql, [identifier, identifier], (err, row) => {
       if (err) {
-        return reject(new apiError(500, "Error fetching user profile"));
+        return reject(new apiError(500, 'Error fetching user profile'));
       }
-      if(!row) {
-        return reject(new apiError(404, "User not found"));
+      if (!row) {
+        return reject(new apiError(404, 'User not found'));
       }
       resolve(row);
-    })
-  })
+    });
+  });
   return user;
 }
