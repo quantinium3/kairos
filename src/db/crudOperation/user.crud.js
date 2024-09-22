@@ -149,7 +149,7 @@ export async function invalidateRefreshToken(refreshToken) {
  * fetch password from db and compare it to password
  * if valid delete the user.
  */
-export async function deleteUser(identifier, password) {
+export async function deleteUserFromDB(identifier, password) {
   const db = await dbPromise;
 
   const user = await new Promise((resolve, reject) => {
