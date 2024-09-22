@@ -1,0 +1,21 @@
+meta {
+  name: Logout
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{server}}/api/v1/users/logout
+  body: formUrlEncoded
+  auth: none
+}
+
+body:json {
+  {
+    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJxdWFudGluaXVtIiwiZW1haWwiOiJxdWFudEBjLmNvbSIsImlhdCI6MTcyNzA0MDMwOSwiZXhwIjoxNzI3MDQxMjA5fQ.HQ-UxV1Zhy8B-Dn8H2aC6y6L_jzw1gMkYx3bvUecQoI"
+  }
+}
+
+body:form-urlencoded {
+  accessToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwidXNlcm5hbWUiOiJxdWFudGluaXVtIiwiZW1haWwiOiJxdWFudEBjLmNvbSIsImlhdCI6MTcyNzA0MDMwOSwiZXhwIjoxNzI3MDQxMjA5fQ.HQ-UxV1Zhy8B-Dn8H2aC6y6L_jzw1gMkYx3bvUecQoI
+}
