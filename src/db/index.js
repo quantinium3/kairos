@@ -162,19 +162,18 @@ dbPromise = initializeDatabase()
   .then((db) => {
     console.log('Creating tables...');
     return Promise.all([
-      createMediaTypesTable(db), // Create media_types table first
+      createMediaTypesTable(db),
       createMediaLibraryTable(db),
-      createUserTable(db), // Ensure user table is created after media_types
+      createUserTable(db),
       createSeasonsTable(db),
       createEpisodesTable(db),
       initializeMediaTypes(db),
-    ]).then(() => db); // Wait for all tables to be created
+    ]).then(() => db);
   })
   .catch((err) => {
     console.error('Database initialization failed:', err);
-    throw err; // Rethrow the error to handle it in your application
+    throw err;
   });
 
-// Export dbPromise for use in other modules
 export { dbPromise };
 export default dbPromise;

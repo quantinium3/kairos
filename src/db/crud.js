@@ -1,4 +1,3 @@
-import connectDB from './index.js';
 import { dbOperation } from '../utils/dbOperation.js';
 
 export async function getAllMedia() {
