@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 
-const isPasswordValid = (password, hash) => {
-  return bcrypt.compareSync(password, hash);
+const isPasswordValid = async(password, hash) => {
+  return await bcrypt.compare(password, hash);
 }
 
 export { isPasswordValid };
