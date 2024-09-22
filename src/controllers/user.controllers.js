@@ -5,6 +5,7 @@ import {
   login,
   refreshToken,
   register,
+  updatePassword,
 } from '../db/crudOperation/user.crud.js';
 import { apiError } from '../utils/apiError.js';
 import { apiResponse } from '../utils/apiResponse.js';
@@ -14,20 +15,6 @@ const options = {
   httpOnly: true,
   secure: true,
 };
-/*
-
-
-
-
-Update User Profile
-PUT /api/v1/users/profile: Update user details like email, username, etc.
-Password Reset
-
-POST /api/v1/users/reset-password: Initiate a password reset process.
-Change Password
-
-PUT /api/v1/users/change-password: Update the user's password.
- */
 /*
  * User Registration
  * POST /api/v1/users/register: Create a new user.
@@ -59,7 +46,7 @@ export const loginUser = asyncHandler(async (req, res) => {
   const { username, email, password } = req.body;
 
   if (!username || !email) {
-    throw new apiError(400, 'At least one of username or email is required');
+    throw new apiError(400, 'Either one of username or email is required');
   }
 
   if (!password) {
@@ -119,7 +106,7 @@ export const getUserProfile = asyncHandler(async (req, res) => {
   if (!username || !email) {
     throw new apiError(
       401,
-      'At least one of the username or the enail is needed'
+      'Either one of the username or the enail is needed'
     );
   }
 
@@ -143,7 +130,7 @@ export const getUserProfile = asyncHandler(async (req, res) => {
 export const deleteUser = asyncHandler(async (req, res) => {
   const { username, email, password } = req.body;
   if (!username || !email) {
-    throw new apiError(401, 'At least one of username or email is needed');
+    throw new apiError(401, 'Either one of username or email is needed');
   }
 
   const identifier = username || email;
@@ -159,3 +146,35 @@ export const deleteUser = asyncHandler(async (req, res) => {
     throw new apiError(500, "Couldn't Delete user");
   }
 });
+
+/*
+ * Password Reset
+ * POST /api/v1/users/reset-password: Initiate a password reset process.
+ */
+
+export const changePassword = asyncHandler(async (req, res) => {
+  const { username, email, oldPassword, newPassword } = req.body;
+  if (!username || !email) {
+    throw new apiError(401, 'Either one of username or email is needed');
+  }
+
+  if (oldPassword === newPassword) {
+    throw new apiError(412, 'Old password and new password cannot be same');
+  }
+
+  const identifier = username || email;
+  try {
+    await updatePassword(identifier, oldPassword, newPassword);
+    res
+      .status(200)
+      .json(new apiResponse(200, 'Updated the password successfully'));
+  } catch (err) {
+    console.error('Error while updating password');
+    throw new apiError(500, "Couldn't Update user password");
+  }
+});
+
+/*
+* Update User Profile
+* PUT /api/v1/users/profile: Update user details like email, username, etc.
+*/
