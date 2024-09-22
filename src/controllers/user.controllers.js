@@ -153,9 +153,7 @@ export const deleteUser = asyncHandler(async (req, res) => {
       .status(200)
       .clearCookie('refreshToken', refreshToken, options)
       .clearCookie('accessToken', accessToken, options)
-      .json(
-        new apiResponse(200, "User deleted successfully");
-      );
+      .json(new apiResponse(200, 'User deleted successfully'));
   } catch (err) {
     console.error('Error while deleting user');
     throw new apiError(500, "Couldn't Delete user");
