@@ -15,6 +15,7 @@ const options = {
   httpOnly: true,
   secure: true,
 };
+
 /*
  * User Registration
  * POST /api/v1/users/register: Create a new user.
@@ -41,16 +42,15 @@ export const registerUser = asyncHandler(async (req, res) => {
  * User Login
  * POST /api/v1/users/login: Authenticate a user and issue a token.
  */
-
 export const loginUser = asyncHandler(async (req, res) => {
   const { username, email, password } = req.body;
 
-  if (!username || !email) {
+  if (!username && !email) {
     throw new apiError(400, 'Either one of username or email is required');
   }
 
   if (!password) {
-    throw new apiError(401, 'Password is required');
+    throw new apiError(401, 'password is required');
   }
 
   const identifier = username || email;
@@ -80,30 +80,33 @@ export const loginUser = asyncHandler(async (req, res) => {
 
 export const logoutUser = asyncHandler(async (req, res) => {
   const refreshToken = req.cookies.refreshToken;
+
+  console.log(`refreshToken:${refreshToken}`);
   if (!refreshToken) {
-    throw new apiError(401, 'No refreshToken found');
+    console.log(`refreshToken:${refreshToken}`);
   }
 
   try {
-    const result = await invalidateRefreshToken(refreshToken);
+    const result = await invalidateRefreshToken(refreshToken); // Invalidate the refresh token in the DB
+
     return res
       .status(200)
       .clearCookie('accessToken', options)
       .clearCookie('refreshToken', options)
-      .json(new apiResponse(200, { result: result }, 'User logged out'));
+      .json(new apiResponse(200, { result }, 'User logged out successfully'));
   } catch (err) {
-    console.error('Error while logging out user');
+    console.error('Error while logging out user:', err);
     throw new apiError(500, "Couldn't log out user");
   }
 });
 
 /* Get User Profile
- *GET /api/v1/users/profile: Retrieve the logged-in user's profile information.
+ * GET /api/v1/users/profile: Retrieve the logged-in user's profile information.
  */
-
 export const getUserProfile = asyncHandler(async (req, res) => {
   const { username, email } = req.body;
-  if (!username || !email) {
+  console.log(username, email);
+  if (!username && !email) {
     throw new apiError(
       401,
       'Either one of the username or the enail is needed'
@@ -126,10 +129,9 @@ export const getUserProfile = asyncHandler(async (req, res) => {
  *Delete User
  * DELETE /api/v1/users/profile: Remove the user account.
  */
-
 export const deleteUser = asyncHandler(async (req, res) => {
   const { username, email, password } = req.body;
-  if (!username || !email) {
+  if (!username && !email) {
     throw new apiError(401, 'Either one of username or email is needed');
   }
 
@@ -138,12 +140,12 @@ export const deleteUser = asyncHandler(async (req, res) => {
     await deleteUserFromDB(identifier, password);
     return res
       .status(200)
-      .clearCookie('refreshToken', refreshToken, options)
-      .clearCookie('accessToken', accessToken, options)
+      .clearCookie('refreshToken', options) // Ensure you are passing valid tokens or use null
+      .clearCookie('accessToken', options) // Ensure you are passing valid tokens or use null
       .json(new apiResponse(200, 'User deleted successfully'));
   } catch (err) {
-    console.error('Error while deleting user');
-    throw new apiError(500, "Couldn't Delete user");
+    console.error('Error while deleting user:', err.message); // Log the error message
+    throw new apiError(500, "Couldn't delete user");
   }
 });
 
@@ -151,10 +153,9 @@ export const deleteUser = asyncHandler(async (req, res) => {
  * Password Reset
  * POST /api/v1/users/reset-password: Initiate a password reset process.
  */
-
 export const changePassword = asyncHandler(async (req, res) => {
   const { username, email, oldPassword, newPassword } = req.body;
-  if (!username || !email) {
+  if (!username && !email) {
     throw new apiError(401, 'Either one of username or email is needed');
   }
 
@@ -175,6 +176,6 @@ export const changePassword = asyncHandler(async (req, res) => {
 });
 
 /*
-* Update User Profile
-* PUT /api/v1/users/profile: Update user details like email, username, etc.
-*/
+ * Update User Profile
+ * PUT /api/v1/users/profile: Update user details like email, username, etc.
+ */
