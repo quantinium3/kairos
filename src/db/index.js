@@ -28,119 +28,38 @@ function createUserTable(db) {
   });
 }
 
-function createMediaTypesTable(db) {
+function createMoviesTable(db) {
   return new Promise((resolve, reject) => {
     const sql = `
-    CREATE TABLE IF NOT EXISTS media_types (
+      CREATE TABLE IF NOT EXISTS movies (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL UNIQUE
+      title TEXT NOT NULL,
+      directoryPath TEXT NOT NULL,
+      filePath TEXT_NOT NULL,
+      year TEXT,
+      releaseDate TEXT,
+      runtime TEXT,
+      genre TEXT,
+      director TEXT,
+      writer TEXT,
+      actor TEXT,
+      description TEXT,
+      language TEXT,
+      country TEXT,
+      posterUrl TEXT,
+      imdbRating TEXT
     );
-    `;
+      `;
     db.run(sql, (err) => {
       if (err) {
-        console.log('Error creating media_types table: ', err.message);
+        console.log("Error creating the movies table", err.message);
         reject(err);
       } else {
-        console.log('media_types created successfully or already exists');
+        console.log("Created the movies table successfully");
         resolve();
       }
-    });
-  });
-}
-
-function createMediaLibraryTable(db) {
-  return new Promise((resolve, reject) => {
-    const sql = `
-      CREATE TABLE IF NOT EXISTS media_library (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        title TEXT NOT NULL,
-        description TEXT,
-        release_date INTEGER,
-        media_type_id INTEGER NOT NULL,
-        base_path TEXT NOT NULL,
-        created_at INTEGER NOT NULL,
-        updated_at INTEGER NOT NULL,
-        FOREIGN KEY (media_type_id) REFERENCES media_types(id)
-  );
-`;
-    db.run(sql, (err) => {
-      if (err) {
-        console.log('Error creating media_library table: ', err.message);
-        reject(err);
-      } else {
-        console.log('media_library table created or already exists');
-        resolve();
-      }
-    });
-  });
-}
-
-function createSeasonsTable(db) {
-  return new Promise((resolve, reject) => {
-    const sql = `
-      CREATE TABLE IF NOT EXISTS seasons (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        media_library_id INTEGER NOT NULL,
-        season_number INTEGER NOT NULL,
-        title TEXT,
-        FOREIGN KEY (media_library_id) REFERENCES media_library(id)
-  );
-`;
-    db.run(sql, (err) => {
-      if (err) {
-        console.log('Error creating seasons table: ', err.message);
-        reject(err);
-      } else {
-        console.log('Seasons table created or already exists');
-        resolve();
-      }
-    });
-  });
-}
-
-function createEpisodesTable(db) {
-  return new Promise((resolve, reject) => {
-    const sql = `
-        CREATE TABLE IF NOT EXISTS episodes (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        media_library_id INTEGER NOT NULL,
-        season_id INTEGER,
-        episode_number INTEGER,
-        title TEXT,
-        file_path TEXT NOT NULL,
-        duration INTEGER,
-        FOREIGN KEY (media_library_id) REFERENCES media_library(id),
-        FOREIGN KEY (season_id) REFERENCES seasons(id)
-  );
-    `;
-    db.run(sql, (err) => {
-      if (err) {
-        console.log('Error creating episodes table', err.message);
-        reject(err);
-      } else {
-        console.log('Episodes table successfully created or already exists');
-        resolve();
-      }
-    });
-  });
-}
-
-function initializeMediaTypes(db) {
-  return new Promise((resolve, reject) => {
-    const mediaTypes = ['Movie', 'TV Show', 'Anime'];
-    const placeholders = mediaTypes.map(() => '(?)').join(',');
-    const sql = `INSERT OR IGNORE INTO media_types (name) VALUES ${placeholders}`;
-
-    db.run(sql, (err) => {
-      if (err) {
-        console.error('Error initializing media types', err.message);
-        reject(err);
-      } else {
-        console.log('Media Types Successfully initialized');
-        resolve();
-      }
-    });
-  });
+    })
+  })
 }
 
 function initializeDatabase() {
@@ -162,12 +81,8 @@ dbPromise = initializeDatabase()
   .then((db) => {
     console.log('Creating tables...');
     return Promise.all([
-      createMediaTypesTable(db),
-      createMediaLibraryTable(db),
       createUserTable(db),
-      createSeasonsTable(db),
-      createEpisodesTable(db),
-      initializeMediaTypes(db),
+      createMoviesTable(db),
     ]).then(() => db);
   })
   .catch((err) => {
