@@ -4,9 +4,8 @@ import dbPromise from '../db/index.js';
 import { apiError } from '../utils/apiError.js';
 import { ACCESS_TOKEN_SECRET } from '../constants.js';
 
-export const verifyJWT = asyncHandler(async (req, res, next) => {
+export const verifyJWT = asyncHandler(async (req, _, next) => {
   try {
-    // Retrieve the access token from cookies or the Authorization header
     const token =
       req.cookies?.accessToken ||
       req.header('Authorization')?.replace('Bearer ', '');
@@ -14,12 +13,9 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
     if (!token) {
       throw new apiError(401, 'Unauthorized request');
     }
-    console.log(token)
 
-    // Verify the token and extract the payload
     const decodedToken = jwt.verify(token, ACCESS_TOKEN_SECRET);
 
-    // Retrieve the user information from the SQLite database using dbPromise
     const db = await dbPromise;
     const user = await new Promise((resolve, reject) => {
       const sql = 'SELECT * FROM users WHERE id = ?';
@@ -31,19 +27,15 @@ export const verifyJWT = asyncHandler(async (req, res, next) => {
       });
     });
 
-    // If no user is found, throw an error
     if (!user) {
       throw new apiError(401, 'Invalid Access Token');
     }
 
-    // Optionally, remove sensitive fields like password and refreshToken from the user object
     delete user.password;
     delete user.refreshToken;
 
-    // Attach the user information to the request object
     req.user = user;
 
-    // Proceed to the next middleware or route handler
     next();
   } catch (error) {
     throw new apiError(401, error?.message || 'Invalid access token');
