@@ -14,7 +14,7 @@ export const getAllMovies = asyncHandler(async (req, res) => {
 });
 
 export const getSpecificMovieInfoById = asyncHandler(async (req, res) => {
-  const { movieId } = req.params.id;
+  const movieId = req.params.id;
   const movie = await getMovieInfo(movieId);
   res.status(200).json(new apiResponse(200, movie, "Movie data fetched successfully"))
 })

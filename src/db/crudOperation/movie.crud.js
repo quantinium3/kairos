@@ -50,14 +50,16 @@ async function getMovieInfo(movieId) {
 `;
     db.get(sql, [movieId], (err, row) => {
       if (err) {
-        return reject(new apiError(500, "Error fetching the movie from the database"));
+        return reject(
+          new apiError(500, 'Error fetching the movie from the database')
+        );
       }
       if (!row) {
-        return reject(new apiError(404, "Movie was not found"));
+        return reject(new apiError(404, 'Movie was not found'));
       }
       resolve(row);
-    })
-  })
+    });
+  });
   return movie;
 }
 
