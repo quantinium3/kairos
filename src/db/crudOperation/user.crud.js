@@ -196,9 +196,9 @@ export async function deleteUserFromDB(identifier, password) {
     throw new apiError(401, 'Invalid credentials');
   }
 
-  const sql = 'DELETE FROM users WHERE username = ? OR email = ?'; 
+  const sql = 'DELETE FROM users WHERE username = ? OR email = ?';
   return new Promise((resolve, reject) => {
-    db.run(sql, [identifier, identifier], function(err) {
+    db.run(sql, [identifier, identifier], function (err) {
       if (err) {
         return reject(err);
       }
@@ -207,7 +207,6 @@ export async function deleteUserFromDB(identifier, password) {
     });
   });
 }
-
 
 /*
  * get the (username || email) and oldPassword and newPassword

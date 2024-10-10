@@ -3,13 +3,15 @@ import dbPromise from '../index.js';
 import fs from 'fs/promises';
 import path from 'path';
 import axios from 'axios';
+import { apiError } from '../../utils/apiError.js';
+import { apiResponse } from '../../utils/apiResponse.js';
 
 async function fetchMovieInfo(movieName) {
   try {
     const res = await axios.get(
-      `${process.env.OMDB_URI}/?t=${encodeURIComponent(movieName)}&apiK=${process.env.OMDB_API_KEY}`
+      `${process.env.OMDB_URI}/?t=${encodeURIComponent(movieName)}&apiKey=${process.env.OMDB_API_KEY}`
     );
-    console.log(res)
+    console.log(res);
     return res.data.Response === 'True' ? res.data : null;
   } catch (err) {
     console.error('Error fetching movie info:', err.message);
@@ -19,11 +21,11 @@ async function fetchMovieInfo(movieName) {
 
 async function addMovieToDatabase(db, movieData, moviePath, fileName) {
   const sql = `
-    INSERT OR REPLACE INTO movies (
+    INSERT OR IGNORE INTO movies (
       title, directoryPath, filePath, year, releaseDate, runtime, 
       genre, director, writer, actor, description, language, 
       country, posterUrl, imdbRating
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) 
   `;
   const params = [
     movieData.Title,
@@ -44,7 +46,7 @@ async function addMovieToDatabase(db, movieData, moviePath, fileName) {
   ];
 
   return new Promise((resolve, reject) => {
-    db.run(sql, params, function (err) {
+    db.run(sql, params, function(err) {
       if (err) reject(err);
       else resolve(this.lastID);
     });
@@ -84,6 +86,7 @@ async function refreshMovieDatabase() {
     console.log('Movie database refresh completed.');
   } catch (err) {
     console.error('Error refreshing movie database:', err);
+    throw new apiError(500, "couldn't refresh the movie database");
   }
 }
 
