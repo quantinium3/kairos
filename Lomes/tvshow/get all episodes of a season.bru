@@ -1,0 +1,21 @@
+meta {
+  name: get all episodes of a season
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{server}}/api/v1/tvshow/169/episodes/1
+  body: json
+  auth: none
+}
+
+headers {
+  seasonNo: 1
+}
+
+body:json {
+  {
+    "seasonNo": "1"
+  }
+}
