@@ -7,8 +7,8 @@ export const REFRESH_TOKEN_SECRET = "zxcvbnmasdfghjklqwertyuiop1234567890"
 export const ACCESS_TOKEN_EXPIRY = '15m'
 export const REFRESH_TOKEN_EXPIRY = '30d';
 
-const userInfo = os.userInfo();
-const uid = userInfo.uid;
 export const MOVIES_DIR = `/home/quantinium/Movies`
+export const TVSHOW_DIR = `/home/quantinium/TV`
+export const ANIME_DIR = `/home/quantinium/Anime`
 
 export const VIDEO_EXT = ['.mkv', '.mp4', '.avi', '.mov', '.flv', '.wmv', 'm4v']
