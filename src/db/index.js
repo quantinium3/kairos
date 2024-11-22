@@ -202,6 +202,24 @@ function createAnimeEpisode(db) {
   });
 }
 
+/* function createSettingsTable(db) {
+  return new Promise((resolve, reject) => {
+    const sql = `
+    CREATE TABLE IF NOT EXISTS settings (
+      Id INTEGER UNIQUE PRIMARY KEY AUTOINCREMENT NOT NULL,
+      serverName TEXT DEFAULT 'lomes' NOT NULL
+      timeZone TEXT,
+      theme TEXT DEFAULT 'light' NOT NULL,
+      movieDirPath TEXT,
+      tvShowDirPath TEXT,
+      animeDirPath TEXT,
+      port INTEGER DEFAULT '6969' NOT NULL,
+       
+    );
+    `;
+  })
+} */
+
 function initializeDatabase() {
   return new Promise((resolve, reject) => {
     const db = new sqlite3.Database(DB_NAME, (err) => {
